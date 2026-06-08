@@ -219,15 +219,36 @@ objective* — is the part that outlives this specific controller.
 
 ## 7. Quick start
 
+**Prerequisites:** a C++23 compiler (g++ 11+), `make`, and `libaio-dev`
+(`sudo apt-get install libaio-dev` on Debian/Ubuntu). Python 3 with
+`pandas`/`matplotlib` is only needed for the analysis/plot scripts.
+
 ```bash
+# 1) Clone
+git clone git@github.com:DaeZZang/cloud_project.git
+cd cloud_project
+
+# 2) Build (the patched PrediCache source ships as plain files — no submodule init)
 cd repo/PrediCache
 make                       # needs libaio-dev; builds ./predicache
-./predicache               # default: TPC-C, 1 thread, 1 GB pool
+./predicache               # smoke test: default = TPC-C, 1 thread, 1 GB pool
 
-# Reproduce the three headline experiments:
-bash experiments/run_main_v2.sh       # Finding 1: static sensitivity sweep
-bash experiments/run_tpb_v5_3wl.sh    # Finding 3: TPB vs default, 3 workloads
+# 3) Reproduce the headline experiments (run from repo/PrediCache;
+#    scripts write per-replicate CSVs under results/)
+bash ../../experiments/run_main_v2.sh       # Finding 1: static sensitivity sweep (~25 min)
+bash ../../experiments/run_tpb_v5_3wl.sh    # Finding 3: TPB vs default, 3 workloads
+bash ../../experiments/run_cbp_v3.sh        # the CBP-v3 negative result (optional)
+
+# 4) Analyze / plot (from repo root)
+cd ../..
+python experiments/analyze_v2.py            # tables + summary.json
+python experiments/plot.py                  # figures under results/figures/
 ```
+
+> **Note.** The experiments above are *in-memory* and do **not** need the large
+> `*.bm` backing files (excluded from the repo by design); PrediCache allocates
+> its pool in RAM. Only the out-of-memory regime would create a `*.bm` file, and
+> it does so automatically on first run.
 
 **Runtime knobs** (env vars):
 
