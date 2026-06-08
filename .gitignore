@@ -16,3 +16,5 @@ __pycache__/
 # Editor / OS
 .DS_Store
 *.swp
+repo/PrediCache/predicache*bin
+repo/PrediCache/*bin
