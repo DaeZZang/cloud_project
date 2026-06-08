@@ -1,0 +1,18 @@
+# Large generated buffer-manager backing files (regenerated at runtime)
+*.bm
+predi_test*
+
+# Build artifacts
+repo/PrediCache/predicache
+repo/PrediCache/build/
+repo/PrediCache/*.o
+*.o
+*.out
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Editor / OS
+.DS_Store
+*.swp

@@ -1,0 +1,67 @@
+[17:47:42] tpcc_chance0 r1 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=0 PROMO_SHARED=0 PROMO_EXCL=0 PROMO_DISPLACE=16
+[17:48:22] tpcc_chance0 r2 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=0 PROMO_SHARED=0 PROMO_EXCL=0 PROMO_DISPLACE=16
+[17:49:03] tpcc_chance16 r1 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=16 PROMO_SHARED=16 PROMO_EXCL=16 PROMO_DISPLACE=16
+[17:49:44] tpcc_chance16 r2 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=16 PROMO_SHARED=16 PROMO_EXCL=16 PROMO_DISPLACE=16
+[17:50:23] tpcc_chance32 r1 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[17:51:04] tpcc_chance32 r2 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[17:51:44] tpcc_chance128 r1 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=128 PROMO_SHARED=128 PROMO_EXCL=128 PROMO_DISPLACE=16
+[17:52:25] tpcc_chance128 r2 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=128 PROMO_SHARED=128 PROMO_EXCL=128 PROMO_DISPLACE=16
+[17:53:04] tpcc_cbp r1 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/main_v2/tpcc_cbp_dump.csv
+[17:53:44] tpcc_cbp r2 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/main_v2/tpcc_cbp_dump.csv
+[17:54:24] rndread_chance0 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=0 PROMO_SHARED=0 PROMO_EXCL=0 PROMO_DISPLACE=16
+[17:55:00] rndread_chance0 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=0 PROMO_SHARED=0 PROMO_EXCL=0 PROMO_DISPLACE=16
+[17:55:38] rndread_chance16 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=16 PROMO_SHARED=16 PROMO_EXCL=16 PROMO_DISPLACE=16
+[17:56:14] rndread_chance16 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=16 PROMO_SHARED=16 PROMO_EXCL=16 PROMO_DISPLACE=16
+[17:56:51] rndread_chance32 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[17:57:30] rndread_chance32 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[17:58:06] rndread_chance128 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=128 PROMO_SHARED=128 PROMO_EXCL=128 PROMO_DISPLACE=16
+[17:58:42] rndread_chance128 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=128 PROMO_SHARED=128 PROMO_EXCL=128 PROMO_DISPLACE=16
+[17:59:19] rndread_cbp r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/main_v2/rndread_cbp_dump.csv
+[17:59:56] rndread_cbp r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/main_v2/rndread_cbp_dump.csv
+[18:00:33] ycsb_skewed_chance0 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=0 PROMO_SHARED=0 PROMO_EXCL=0 PROMO_DISPLACE=16
+[18:01:11] ycsb_skewed_chance0 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=0 PROMO_SHARED=0 PROMO_EXCL=0 PROMO_DISPLACE=16
+[18:01:48] ycsb_skewed_chance16 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=16 PROMO_SHARED=16 PROMO_EXCL=16 PROMO_DISPLACE=16
+[18:02:26] ycsb_skewed_chance16 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=16 PROMO_SHARED=16 PROMO_EXCL=16 PROMO_DISPLACE=16
+[18:03:05] ycsb_skewed_chance32 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:03:42] ycsb_skewed_chance32 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:04:19] ycsb_skewed_chance128 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=128 PROMO_SHARED=128 PROMO_EXCL=128 PROMO_DISPLACE=16
+[18:04:57] ycsb_skewed_chance128 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=128 PROMO_SHARED=128 PROMO_EXCL=128 PROMO_DISPLACE=16
+[18:05:35] ycsb_skewed_cbp r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/main_v2/ycsb_skewed_cbp_dump.csv
+[18:06:13] ycsb_skewed_cbp r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/main_v2/ycsb_skewed_cbp_dump.csv
+=== ALL DONE ===
+total 140
+drwxr-xr-x 2 s_zun212 ys_ms 4096 May  8 18:06 .
+drwxr-xr-x 5 s_zun212 ys_ms 4096 May  8 17:47 ..
+-rw-r--r-- 1 s_zun212 ys_ms  371 May  8 18:00 rndread_cbp_dump.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 17:59 rndread_cbp_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 18:00 rndread_cbp_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 17:54 rndread_chance0_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 17:55 rndread_chance0_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 17:58 rndread_chance128_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1524 May  8 17:59 rndread_chance128_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 17:56 rndread_chance16_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 17:56 rndread_chance16_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1525 May  8 17:57 rndread_chance32_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 17:57 rndread_chance32_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms  362 May  8 17:54 tpcc_cbp_dump.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:53 tpcc_cbp_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:54 tpcc_cbp_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:48 tpcc_chance0_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:48 tpcc_chance0_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:52 tpcc_chance128_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:52 tpcc_chance128_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:49 tpcc_chance16_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:50 tpcc_chance16_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:50 tpcc_chance32_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 17:51 tpcc_chance32_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms  367 May  8 18:06 ycsb_skewed_cbp_dump.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:06 ycsb_skewed_cbp_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:06 ycsb_skewed_cbp_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:01 ycsb_skewed_chance0_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:01 ycsb_skewed_chance0_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:04 ycsb_skewed_chance128_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:05 ycsb_skewed_chance128_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:02 ycsb_skewed_chance16_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1449 May  8 18:02 ycsb_skewed_chance16_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:03 ycsb_skewed_chance32_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:04 ycsb_skewed_chance32_r2.csv

@@ -1,0 +1,25 @@
+[13:42:17] tpcc_default r1 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[13:43:02] tpcc_default r2 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[13:43:46] tpcc_default r3 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[13:44:30] tpcc_default r4 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[13:45:14] tpcc_default r5 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[13:45:58] tpcc_tpb r1 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb/tpcc_tpb_dump.csv
+[13:46:42] tpcc_tpb r2 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb/tpcc_tpb_dump.csv
+[13:47:26] tpcc_tpb r3 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb/tpcc_tpb_dump.csv
+[13:48:10] tpcc_tpb r4 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb/tpcc_tpb_dump.csv
+[13:48:55] tpcc_tpb r5 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb/tpcc_tpb_dump.csv
+=== ALL DONE ===
+total 52
+drwxr-xr-x 2 s_zun212 ys_ms 4096 May 12 13:48 .
+drwxr-xr-x 9 s_zun212 ys_ms 4096 May 12 13:42 ..
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:42 tpcc_default_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:43 tpcc_default_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:44 tpcc_default_r3.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:45 tpcc_default_r4.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:45 tpcc_default_r5.csv
+-rw-r--r-- 1 s_zun212 ys_ms   58 May 12 13:49 tpcc_tpb_dump.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:46 tpcc_tpb_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:47 tpcc_tpb_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1437 May 12 13:48 tpcc_tpb_r3.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1436 May 12 13:48 tpcc_tpb_r4.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1438 May 12 13:49 tpcc_tpb_r5.csv

@@ -1,0 +1,43 @@
+[18:33:13] tpcc_default r1 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:33:54] tpcc_default r2 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:34:34] tpcc_default r3 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:35:14] tpcc_cbp_v4 r1 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/tpcc_cbp_v4_dump.csv
+[18:35:56] tpcc_cbp_v4 r2 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/tpcc_cbp_v4_dump.csv
+[18:36:37] tpcc_cbp_v4 r3 (POOL=16GB) :: DATASIZE=8 WORKLOAD=tpc-c PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/tpcc_cbp_v4_dump.csv
+[18:37:19] rndread_default r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:37:57] rndread_default r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:38:40] rndread_default r3 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:39:19] rndread_cbp_v4 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/rndread_cbp_v4_dump.csv
+[18:39:56] rndread_cbp_v4 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/rndread_cbp_v4_dump.csv
+[18:40:34] rndread_cbp_v4 r3 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=rndread PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/rndread_cbp_v4_dump.csv
+[18:41:11] ycsb_skewed_default r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:42:02] ycsb_skewed_default r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:42:42] ycsb_skewed_default r3 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[18:43:21] ycsb_skewed_cbp_v4 r1 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/ycsb_skewed_cbp_v4_dump.csv
+[18:43:59] ycsb_skewed_cbp_v4 r2 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/ycsb_skewed_cbp_v4_dump.csv
+[18:44:37] ycsb_skewed_cbp_v4 r3 (POOL=8GB) :: DATASIZE=10000000 WORKLOAD=ycsb ZIPF_FACTOR=0.9 OPS_PER_TX=1 READ_RATIO=100 PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 CBP_V4=1 CBP_DUMP=/lustre/s_zun212/TPC-C/results/cbp_v4/ycsb_skewed_cbp_v4_dump.csv
+=== ALL DONE ===
+total 92
+drwxr-xr-x 2 s_zun212 ys_ms 4096 May  8 18:44 .
+drwxr-xr-x 8 s_zun212 ys_ms 4096 May  8 18:33 ..
+-rw-r--r-- 1 s_zun212 ys_ms   47 May  8 18:41 rndread_cbp_v4_dump.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 18:39 rndread_cbp_v4_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 18:40 rndread_cbp_v4_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 18:41 rndread_cbp_v4_r3.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 18:37 rndread_default_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 18:38 rndread_default_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1526 May  8 18:39 rndread_default_r3.csv
+-rw-r--r-- 1 s_zun212 ys_ms   63 May  8 18:37 tpcc_cbp_v4_dump.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 18:35 tpcc_cbp_v4_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 18:36 tpcc_cbp_v4_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1227 May  8 18:37 tpcc_cbp_v4_r3.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 18:33 tpcc_default_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 18:34 tpcc_default_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1228 May  8 18:35 tpcc_default_r3.csv
+-rw-r--r-- 1 s_zun212 ys_ms   45 May  8 18:45 ycsb_skewed_cbp_v4_dump.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:43 ycsb_skewed_cbp_v4_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:44 ycsb_skewed_cbp_v4_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:45 ycsb_skewed_cbp_v4_r3.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:41 ycsb_skewed_default_r1.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1451 May  8 18:42 ycsb_skewed_default_r2.csv
+-rw-r--r-- 1 s_zun212 ys_ms 1449 May  8 18:43 ycsb_skewed_default_r3.csv

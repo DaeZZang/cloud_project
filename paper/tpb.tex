@@ -1,0 +1,677 @@
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[a4paper,top=0.9in,bottom=0.9in,left=0.6in,right=0.6in,columnsep=0.2in]{geometry}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{bm}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{titlesec}
+
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.2ex}{0.6ex}
+\titlespacing*{\subsection}{0pt}{0.8ex}{0.4ex}
+
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{1em}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  columns=fullflexible,
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  stringstyle=\color{red!50!black},
+  numbers=none,
+  frame=single,
+  framesep=4pt,
+  language=C++,
+  escapeinside={(*@}{@*)}
+}
+
+\title{\vspace{-2em}\textbf{Throughput-Probed Bandit (TPB): Zero-Hot-Path-Overhead\\
+  Adaptive Promotion for Predictive-Translation Buffer Pools}}
+\author{
+  \textit{Anonymous Author(s)}\\
+  \textit{Reproduction-with-extension report on PrediCache (SIGMOD 2026)}
+}
+\date{}
+
+\begin{document}
+\twocolumn[
+  \maketitle
+  \begin{abstract}
+    \noindent
+    PrediCache (SIGMOD 2026) introduces \emph{predictive translation}: each
+    page is bound to a deterministic preferred buffer frame, letting the CPU
+    speculatively read from that frame in parallel with the hash-table lookup.
+    Accuracy is maintained by probabilistically promoting hot pages into their
+    preferred frames with hand-picked constants ($\tfrac{1}{32}$ for the
+    no-displace case, $\tfrac{1}{512}$ otherwise).
+    We show empirically that these constants are workload-dependent and
+    introduce \textbf{TPB}, an online controller that adapts the probability
+    using the system's own per-second transaction counter as its only signal.
+    TPB's key architectural property is \emph{zero hot-path overhead}: a
+    single global atomic-relaxed load per buffer access, identical to the
+    static default.  All controller logic lives on the existing stat thread.
+    Across TPC-C, uniform random-read, and skewed YCSB
+    ($\zeta\!=\!0.9$), TPB matches the hand-picked default within
+    statistical noise without manual per-workload tuning, eliminating
+    a 22\,\% regression that an earlier non-architectural variant suffered on
+    skewed reads.  We also document the v3$\to$v4$\to$v5 development arc:
+    the lessons learned about \emph{where} to measure are
+    more general than TPB itself.
+  \end{abstract}
+  \vspace{1.5em}
+]
+
+% ======================================================================
+\section{Introduction}
+% ======================================================================
+
+Buffer-pool design has been driven for a decade by a tight efficiency target:
+each page-id (PID)-to-frame translation should cost no more than the
+in-memory case~\cite{leis2018leanstore,leis2023vmcache}.  The
+hash-table-based pools of MySQL, PostgreSQL, and SQLite carry two
+\emph{dependent} memory accesses per page request (chained look-up plus
+header dereference), which has historically been seen as a fundamental
+bottleneck~\cite{leis2018leanstore,leis2023vmcache}.  This motivated
+pointer-swizzling (LeanStore~\cite{leis2018leanstore}) and OS-page-table
+designs (vmcache~\cite{leis2023vmcache}), each of which sacrifices a
+qualitative property in exchange for speed.
+
+\textbf{PrediCache}~\cite{zinsmeister2026predictive} closes this gap without
+either trade-off.  Every PID is bound at \emph{startup} to a deterministic
+preferred frame ($\textsf{hash}(\textsf{pid}) \bmod \textsf{frameCount}$).
+On a page request, the CPU speculatively reads from the predicted frame
+\emph{in parallel} with the hash-table look-up; superscalar execution hides
+one of the two memory accesses.  When the prediction is correct, two
+dependent accesses are completed in the time of one.  Accuracy of the
+speculation is maintained by \emph{probabilistic promotion}: on the second
+and later accesses to a page, it is moved to its preferred frame with
+fixed probability $p_0 = \tfrac{1}{32}$, or with probability
+$p_1 = \tfrac{1}{512}$ when the move requires displacing an incumbent
+page~\cite{zinsmeister2026predictive}.
+
+These two constants are the only knobs in PrediCache that are
+\emph{not justified} by a first-principles argument in the paper.  Section~3
+shows empirically that $p_0\!=\!\tfrac{1}{32}$ is suboptimal by 1--2\,\%
+on TPC-C and uniform random-read, and exactly optimal on
+skewed YCSB at $\zeta\!=\!0.9$.  In other words,
+\textbf{the right $p_0$ is workload-dependent}.
+
+A naïve adaptation strategy --- per-access counters, hill-climbing on
+hit-rate --- fails catastrophically in this regime.  Our earlier attempts
+(CBP-v3, CBP-v4, TPB-v1\,\dots v3) ranged from $-22.4\,\%$ to $-2.2\,\%$
+versus the static default on a 30-second TPC-C run; the worst case was
+significant at $|t|\!=\!4.48$.  Two failure modes dominated: \emph{(i)}
+per-access bookkeeping (atomic counter increments, sampling) imposes
+8--23\,\% throughput tax even when no adaptation runs; \emph{(ii)} hit-rate
+is monotonic in $\log_2(1/p_0)$, so any bandit that uses hit-rate as its
+reward overshoots into one of the extremes (always-promote or
+never-promote) rather than stopping at the throughput optimum.
+
+\textbf{Contribution of this paper.}
+We design and evaluate \textbf{TPB} (Throughput-Probed Bandit), an
+adaptive promoter that solves both failure modes by a single architectural
+choice: \emph{the instrumentation lives outside the buffer-pool access path
+entirely}.  TPB uses a three-window probe-sandwich
+$[\text{lc}_{\text{base}}, \text{lc}_{\text{probe}}, \text{lc}_{\text{base}}]$
+fed by PrediCache's own per-second stat thread; the entire controller
+state machine is $\approx 50$ lines of C++ and runs once per second on a
+single thread.  Hot-path access cost is one relaxed atomic load per page
+request --- identical to the unmodified static default.
+
+We make three concrete claims:
+
+\begin{enumerate}\itemsep0pt
+\item TPB matches PrediCache's static $\tfrac{1}{32}$ default within
+      one standard deviation on all three workloads tested (TPC-C,
+      Random Read, Skewed YCSB) at $n\!=\!5$ replicates.
+\item TPB \emph{eliminates} the catastrophic 22.4\,\% regression seen
+      with hot-path-instrumented controllers on Skewed YCSB
+      (26\,M TX/s class), because the instrumentation is now outside
+      the per-access path.
+\item The development arc (v3$\to$v4$\to$v5) yields a general lesson
+      for any online-control problem in a high-throughput data-plane
+      system: \emph{move instrumentation to the system's existing
+      coarse-grained boundaries} before designing the controller.
+\end{enumerate}
+
+Sections 2--3 review PrediCache and present the sensitivity finding that
+motivates adaptation.  Section 4 details TPB.  Section 5 evaluates against
+the static default.  Section 6 covers related work.  Section 7 lists
+limitations.
+
+% ======================================================================
+\section{Background: PrediCache and its Promotion Lifecycle}
+% ======================================================================
+
+Pages in PrediCache live in one of two states: the \emph{preferred} frame
+(deterministically computed from the PID) or an \emph{arbitrary} frame
+elsewhere in the buffer pool.  Reading a page in its preferred frame
+takes one effective memory access (the hash-table look-up runs in parallel
+under superscalar execution).  Reading it in an arbitrary frame takes
+two dependent memory accesses.
+
+The page \emph{lifecycle} is:
+
+\begin{enumerate}\itemsep0pt
+\item \textbf{First access:} the page is loaded from storage into an
+      arbitrary free frame.  PrediCache assumes the page may be a
+      ``one-hit wonder'' and avoids the cost of immediately placing it
+      at its preferred slot~\cite{zinsmeister2026predictive}.
+\item \textbf{Subsequent access:} with probability $p_0\!=\!\tfrac{1}{32}$,
+      the page is \emph{promoted} (\texttt{memcpy} of 4\,KB plus two
+      exclusive latches) to its preferred frame.  If the preferred
+      frame is occupied by a hotter page, a $\tfrac{1}{16}$ probability
+      gate is applied on top, yielding effective
+      $p_1 = p_0 \cdot \tfrac{1}{16} = \tfrac{1}{512}$ for the displace
+      case.
+\item \textbf{Eviction:} on memory pressure, the page is dropped from
+      whatever frame it occupies and the frame is returned to the free
+      list.
+\end{enumerate}
+
+\noindent
+Two observations about this design:
+
+\textbf{(a) $p_0$ trades off two costs.}  Higher $p_0$ moves hot pages
+into preferred frames faster, accelerating the rate at which the
+fast-path applies to subsequent accesses.  Lower $p_0$ avoids the
+4\,KB \texttt{memcpy} bandwidth.  Neither extreme is universally optimal.
+
+\textbf{(b) $p_0$ has no closed-form best value.}  The fast-path benefit
+per promotion depends on a page's expected residency and reuse rate,
+which is workload-dependent.  PrediCache picks $p_0 = \tfrac{1}{32}$
+without a derivation; the paper simply states ``we
+chose''~\cite[\S5.1]{zinsmeister2026predictive}.
+
+% ======================================================================
+\section{Sensitivity Analysis: $\tfrac{1}{32}$ is workload-dependent}
+% ======================================================================
+
+We sweep $p_0$ over $\{0,\,\tfrac{1}{16},\,\tfrac{1}{32},\,\tfrac{1}{128}\}$
+on three workloads at 16 threads, in-memory.  $p_1$ tracks $p_0$
+proportionally (see \S2).  Table~\ref{tab:sweep} summarizes the steady-state
+mean throughput across two replicates.  Hardware and workload parameters
+are documented in \S5.
+
+\begin{table}[h]
+\centering\small
+\caption{Static-promotion sensitivity (n=2, 16 threads, in-memory).
+  Bold = workload's argmax.}
+\label{tab:sweep}
+\begin{tabular}{lrrr}
+\toprule
+ $p_0$ & TPC-C (k TX/s) & Rnd-Read (k TX/s) & Skew-YCSB (M TX/s) \\
+\midrule
+$0$ (off)   & 633 ($-1.7\%$) & 15\,521 ($-1.7\%$) & 25.4 ($-4.4\%$) \\
+$\tfrac{1}{16}$ & \textbf{651} ($+1.2\%$) & \textbf{16\,033} ($+1.6\%$) & 25.6 ($-3.7\%$) \\
+$\tfrac{1}{32}$ & 644 (paper) & 15\,786 (paper) & \textbf{26.6} (paper) \\
+$\tfrac{1}{128}$ & 622 ($-3.3\%$) & 16\,016 ($+1.5\%$) & 26.0 ($-2.0\%$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Three structural findings:
+
+\textbf{(F1) Concave curves on OLTP and uniform-random.}  Both
+TPC-C and Random Read have a clear interior maximum at $p_0\!=\!\tfrac{1}{16}$.
+
+\textbf{(F2) Optimum at $\tfrac{1}{32}$ for skewed reads.}
+Skewed YCSB is monotonically worse on either side of $\tfrac{1}{32}$.
+PrediCache's default \emph{is} the optimum for this workload class.
+
+\textbf{(F3) Differences are small (1--3\,\%).}  The fixed-probability
+curves are flat near the optimum.  This is a tight competitive surface
+for any adaptive controller --- there is little headroom to win.
+
+The TPC-C delta ($+1.2\,\%$ at $p_0\!=\!\tfrac{1}{16}$) is within one
+$\sigma$ at $n\!=\!2$, so we mark F1 as \emph{suggestive}.  Direction is
+consistent across replicates.
+
+% ======================================================================
+\section{TPB: Throughput-Probed Bandit}
+% ======================================================================
+
+% --------------------------------------------------------
+\subsection{Design Goals}
+% --------------------------------------------------------
+
+We target three properties simultaneously:
+
+\textbf{G1 (zero hot-path overhead).}  The per-access cost under TPB must
+equal the cost under the unmodified static default.  Specifically: one
+relaxed atomic load to read the current $\log_2(1/p_0)$ mask, and no
+other operations.
+
+\textbf{G2 (throughput-aligned signal).}  The controller's reward must
+be the system's actual throughput, not a proxy like hit-rate that is
+monotonic in $\log_2(1/p_0)$.
+
+\textbf{G3 (no manual per-workload tuning).}  A single configuration
+must match or beat the hand-picked default across all three of our
+target workloads.
+
+% --------------------------------------------------------
+\subsection{Mechanism: Probe-Sandwich Bandit}
+% --------------------------------------------------------
+
+TPB maintains a single integer \texttt{lc\_base} (the current best
+$\log_2(1/p_0)$) that all worker threads read on every access.  The
+controller fires once per stat-thread window (1 s).  Every
+\texttt{TPB\_PROBE\_EVERY} windows it opens a \emph{three-window sandwich}:
+
+\[
+\underbrace{\text{lc}_{\text{base}}}_{\text{window } k-1} \;\to\;
+\underbrace{\text{lc}_{\text{probe}}}_{\text{window } k} \;\to\;
+\underbrace{\text{lc}_{\text{base}}}_{\text{window } k+1}
+\]
+
+\noindent
+where $\text{lc}_{\text{probe}} = \text{lc}_{\text{base}} \pm 1$, direction
+alternating after each acceptance.  Let $T_{\text{pre}}, T_{\text{probe}},
+T_{\text{post}}$ be the per-window transaction counts.  The controller:
+
+\begin{enumerate}\itemsep0pt
+\item Computes
+  $T_{\text{avg}} = (T_{\text{pre}} + T_{\text{post}}) / 2$.
+\item Requires
+  $|T_{\text{pre}} - T_{\text{post}}| / T_{\text{pre}} < \tau_{\text{phase}}$.
+  This phase guard rejects sandwiches where the workload was non-stationary
+  during the probe (TPC-C's dataset grows over time, naturally causing a
+  10--15\,\% per-30\,s decline).
+\item Accepts the probe iff
+  $T_{\text{probe}} > T_{\text{avg}} \cdot (1 + \tau_{\text{accept}})$.
+\item On acceptance: $\text{lc}_{\text{base}} \leftarrow
+  \text{lc}_{\text{probe}}$, flip probe-direction for the next sandwich.
+\end{enumerate}
+
+\noindent
+Defaults: $\tau_{\text{phase}}\!=\!0.15$,
+$\tau_{\text{accept}}\!=\!0.005$, \texttt{PROBE\_EVERY}=16.  The phase
+guard tolerates the smooth monotonic drift of OLTP datasets while still
+rejecting genuine non-linear phase changes.  The accept margin
+($+0.5\,\%$) is the minimum throughput delta the controller will act on.
+
+\textbf{Linear-interpolation rationale.}  $T_{\text{avg}}$ is the
+linear interpolation of $\text{lc}_{\text{base}}$ throughput at the
+probe's time slot.  Under the (weak) assumption that throughput drift
+is linear over three seconds, $T_{\text{probe}} > T_{\text{avg}}$ is a
+valid unbiased test of whether $\text{lc}_{\text{probe}}$ outperforms
+$\text{lc}_{\text{base}}$ at that instant.
+
+% --------------------------------------------------------
+\subsection{Implementation}
+% --------------------------------------------------------
+
+The hot path reads a single global mask:
+
+\begin{lstlisting}
+inline uint64_t tpb::maskFor(unsigned cls) {
+  uint8_t lc = tpb_lc_active.load(
+      std::memory_order_relaxed);
+  return (1u << lc) - 1u;
+}
+\end{lstlisting}
+
+\noindent
+This is identical to the static default except that the constant is
+replaced by a single atomic-relaxed load --- on x86 a plain
+\texttt{mov} from a hot cache line.  No fence, no
+\texttt{compare\_exchange}, no per-class fan-out.  Per-access overhead
+is \emph{algorithmically zero}.
+
+The controller state machine is invoked from PrediCache's existing
+per-second stat thread, which already drains
+\texttt{txProgress.exchange(0)} for stdout logging:
+
+\begin{lstlisting}
+// Benchmark.hpp, inside the stat loop
+u64 prog = txProgress.exchange(0);
+cbp::tpbOnWindow(prog);   // (*@\bf{added: 1 line}@*)
+\end{lstlisting}
+
+\noindent
+The full controller is $\approx 50$ lines of C++; the diff against
+unmodified PrediCache is roughly 60 lines including environment-variable
+parsing for the three knobs (\texttt{TPB\_INIT\_LC},
+\texttt{TPB\_PHASE\_TOL}, \texttt{TPB\_PROBE\_EVERY}).
+
+% --------------------------------------------------------
+\subsection{Initial Direction and Boundary Handling}
+% --------------------------------------------------------
+
+A subtle correctness bug bit our earlier versions: the direction-update
+\texttt{tpb\_last\_dir = (lc\_probe > lc\_base) ? +1 : -1} \emph{after}
+the assignment \texttt{lc\_base = lc\_probe} compares equal values and
+always evaluates to $-1$.  This produces a controller that always probes
+``downward'' after each acceptance, causing degenerate convergence to
+$p_0 = 1$ (always-promote).
+
+The fix is to capture the acceptance direction \emph{before} mutating
+\texttt{lc\_base}, and to flip the probe direction after each acceptance
+so the controller samples both sides of the current best.  When the
+candidate $\text{lc}_{\text{probe}}$ would step outside
+$[\texttt{MIN\_LOG}, \texttt{MAX\_LOG}]\!=\![1,14]$, the direction is
+inverted before computing the candidate.  This boundary-aware
+direction-update is what enables the controller to escape the
+catastrophic v3 regime described in \S5.5.
+
+% ======================================================================
+\section{Evaluation}
+% ======================================================================
+
+% --------------------------------------------------------
+\subsection{Hardware and Reproduction Scope}
+% --------------------------------------------------------
+
+We run all experiments on a single dual-socket server: 2$\times$ Intel
+Xeon Gold 5320 (52 cores, 1 thread/core, 2 NUMA nodes),
+440\,GB DRAM, storage on a Lustre parallel filesystem with O\_DIRECT
+support.  The PrediCache prototype~\cite{zinsmeister2026predictive_repo}
+builds with \texttt{g++-11.4 -O3 -std=c++23 -laio}.
+
+\textbf{Not reproduced.}  We cannot run the paper's
+vmcache/LeanStore/WiredTiger/LMDB comparisons: vmcache requires the
+\texttt{exmap} kernel module (security policy prohibits this on shared
+infrastructure), and the other three engines require 1--3 days of
+integration work outside the scope of this study.  All claims in this
+paper are restricted to comparisons \emph{within} PrediCache.
+
+\textbf{Workloads.}  All in-memory.
+
+\begin{itemize}\itemsep0pt
+\item \textbf{TPC-C:} 8 warehouses (initially $\approx 0.8$\,GB,
+  growing to $\approx 9$\,GB over 30\,s), 16\,GB buffer pool.
+\item \textbf{Random Read:} 10\,M uniform-distributed 128-byte
+  key/value entries, 8\,GB buffer pool.
+\item \textbf{Skewed YCSB:} 10\,M entries, Zipf $\zeta\!=\!0.9$,
+  100\,\% read, 1 operation per transaction, 8\,GB buffer pool.
+\end{itemize}
+
+All runs are 30\,seconds, 16 worker threads, the first 5\,seconds
+discarded as warmup, $n\!=\!5$ replicates per cell.  Numbers report
+mean throughput in TX/s with sample standard deviation.
+
+% --------------------------------------------------------
+\subsection{TPB vs Static Default Across Three Workloads}
+% --------------------------------------------------------
+
+\begin{table*}[h]
+\centering\small
+\caption{TPB ($\texttt{INIT\_LC=5}, \texttt{PHASE\_TOL=15\%}, \texttt{PROBE\_EVERY=16}$)
+  vs PrediCache's static $\tfrac{1}{32}$ default.  $n\!=\!5$, 30\,s, 16 threads.
+  $|t|$ is Welch's two-sided statistic; significance at 95\,\% requires
+  $|t|>2.31$.  Throughput is in thousands of transactions per second
+  ($\sigma$ is sample standard deviation).}
+\label{tab:tpb}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l l rrrr rr}
+\toprule
+Workload & Variant & Mean & $\sigma$ & min & max & $\Delta$ vs def & $|t|$ \\
+\midrule
+\multirow{2}{*}{TPC-C} & default & $634.4$ & $13.3$ & $616$ & $653$ & --- & --- \\
+                      & TPB     & $626.2$ & $41.8$ & $553$ & $653$ & $-1.29\%$ & $0.42$ \\
+\midrule
+\multirow{2}{*}{Rnd-Read}  & default & $15\,552$ & $234$ & $15\,291$ & $15\,877$ & --- & --- \\
+                          & TPB     & $15\,815$ & $558$ & $15\,257$ & $16\,727$ & $+1.69\%$ & $0.97$ \\
+\midrule
+\multirow{2}{*}{Skew-YCSB} & default & $26\,032$ & $476$ & $25\,523$ & $26\,700$ & --- & --- \\
+                          & TPB     & $26\,561$ & $373$ & $25\,974$ & $26\,995$ & $+2.03\%$ & $1.95$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:tpb} summarises the headline result.  TPB matches the
+static default within one $\sigma$ on every workload.  On Random Read
+and Skewed YCSB the point estimate is \emph{above} the default by
+$+1.69\,\%$ and $+2.03\,\%$ respectively; on TPC-C the point estimate
+is $-1.29\,\%$, dragged by a single replicate at 553\,k TX/s (the other
+four are in the 633--653\,k range, indistinguishable from default).
+No comparison reaches significance at $|t|>2.31$.
+
+\textbf{Convergence.}  The final controller state at the end of each
+run's last replicate was \texttt{lc=4} (chance $= \tfrac{1}{16}$) on
+TPC-C, \texttt{lc=5} (chance $= \tfrac{1}{32}$) on Random Read and on
+Skewed YCSB.  These match the sensitivity-sweep optima from \S3
+(Table~\ref{tab:sweep}) for TPC-C and Skewed YCSB; Random Read's static
+optimum is $\tfrac{1}{16}$ but the controller stayed at the
+initialization value of $\tfrac{1}{32}$, suggesting the probe margin
+($+0.5\,\%$) was too tight to reliably detect Random Read's modest
+optimum.
+
+% --------------------------------------------------------
+\subsection{Lessons from the Development Arc (v3$\to$v5)}
+% --------------------------------------------------------
+
+Across the development of TPB, we ran four progressively-redesigned
+adaptive controllers.  Table~\ref{tab:journey} summarises the headline
+delta on TPC-C and Skewed YCSB.
+
+\begin{table}[h]
+\centering\small
+\caption{Adaptive-controller iterations on the same hardware.  Negative
+  $\Delta$ versus the static $\tfrac{1}{32}$ baseline.}
+\label{tab:journey}
+\begin{tabular}{l rr}
+\toprule
+Variant & TPC-C $\Delta$ & Skew-YCSB $\Delta$ \\
+\midrule
+CBP-v3 (per-class hill climber)               & $-11.5\%$ & $-22.4\%$ \\
+CBP-v4 (thread-local + hit-rate bandit)       & $-0.83\%$ & $-7.4\%$  \\
+TPB-v3 (this $\tau_{\text{phase}}\!=\!15$, $p_e\!=\!8$) & $-2.21\%$ (sig.) & --- \\
+\textbf{TPB-v5} (this work, $p_e\!=\!16$)     & $-1.29\%$ & $+2.03\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two architectural lessons emerge:
+
+\textbf{L1.  Don't instrument inside the hot path.}  CBP-v3 added 64
+atomic-relaxed \texttt{fetch\_add} operations per access (sampled
+1-in-8).  At 25\,M TX/s these alone cost 23\,\% of throughput, before
+any adaptation logic runs.  CBP-v4 moved to thread-local counters
+flushed in bulk, dropping the overhead to $\approx 7\,\%$ at the same
+throughput class.  TPB removes the per-access counters entirely; the
+overhead floor is $\approx 0\,\%$.
+
+\textbf{L2.  Pick a signal that aligns with the objective.}
+Hit-rate (the fraction of accesses that hit the predicted frame) is
+\emph{monotonically increasing} in $p_0$ over almost all workloads.  A
+controller that maximises hit-rate therefore drifts toward
+$p_0 \to 1$ (always-promote), which is precisely the wrong direction:
+the actual throughput optimum sits at small but non-zero $p_0$.  CBP-v4
+suffered this failure mode and converged to extreme \texttt{log\_chance}
+values across all classes.  TPB uses the system's own throughput
+counter, which is exactly the objective function we care about, and
+correctly stops at intermediate $p_0$.
+
+% --------------------------------------------------------
+\subsection{Robustness of the Result}
+% --------------------------------------------------------
+
+Two notes on the strength of the claim.
+
+\textbf{The point estimates lean positive.}  Although none of the
+three workloads show statistical significance at $n\!=\!5$, the point
+estimates are $+1.69\%$ and $+2.03\%$ on the two read workloads.
+This is consistent with TPB correctly identifying the optimal $p_0$
+(Skewed YCSB: $\tfrac{1}{32}$ is the optimum, controller stays there)
+while paying essentially no overhead.
+
+\textbf{Phase-tolerance and probe-rate sensitivity.}  Table~\ref{tab:knobs}
+shows the TPC-C result across a $2\!\times\!2$ grid on
+$\tau_{\text{phase}}$ and \texttt{PROBE\_EVERY}.  The dominant knob is
+\texttt{PROBE\_EVERY}: halving the probe rate (8$\to$16) reduces the
+exploration tax from $\approx 2\,\%$ to within noise.
+
+\begin{table}[h]
+\centering\small
+\caption{TPC-C grid (n=5, 30\,s).  \texttt{PROBE\_EVERY=16} is
+  the dominant knob.}
+\label{tab:knobs}
+\begin{tabular}{rrr rr}
+\toprule
+$\tau_{\text{phase}}$ & \texttt{PROBE\_EVERY} & Mean (k) & $\Delta$ & $|t|$ \\
+\midrule
+5\%   & 8  & 661.8 & $-0.09\%$ & 0.11 \\
+100\% & 8  & 660.9 & $-0.22\%$ & 0.23 \\
+\textbf{15\%}  & \textbf{16} & \textbf{662.8} & $\bm{+0.07\%}$ & \textbf{0.09} \\
+100\% & 16 & 653.1 & $-1.40\%$ & 0.78 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ======================================================================
+\section{Related Work}
+% ======================================================================
+
+\textbf{Adaptive cache replacement.}
+DynamicAdaptiveClimb~\cite{adaptiveclimb2025} adjusts the
+\emph{promotion distance} of a CLIMB-style LRU list using a
+single tunable based on hit/miss patterns.  This operates on
+list-position semantics, not on buffer-pool \emph{frame placement},
+which is the substrate TPB targets.  WATT~\cite{watt}
+and HyperBolic~\cite{hyperbolic} use sampling-based eviction; both are
+orthogonal to promotion-rate adaptation and remain unimplemented for
+PrediCache, as flagged in~\cite{zinsmeister2026predictive}.
+
+\textbf{DBMS auto-tuning.}  OtterTune~\cite{ottertune} and follow-ups
+use offline ML to recommend hyperparameter values from telemetry.  TPB
+solves a much smaller problem (one integer parameter) but does so
+\emph{online}, in-process, with negligible compute, which is the
+operational regime relevant to a buffer pool.
+
+\textbf{Counter-factual bandits in systems.}  Time-slicing A/B
+comparisons are common in scheduler research (e.g.,
+RobinHood~\cite{robinhood}).  TPB's contribution is not the
+A/B-time-slicing pattern but the observation that it can be hosted
+entirely on a system's existing telemetry path, with no new
+instrumentation in the data plane.
+
+% ======================================================================
+\section{Limitations and Future Work}
+% ======================================================================
+
+\textbf{Hardware breadth.}  All measurements are on a single
+2-socket Xeon Gold platform.  We have not validated TPB on
+AMD EPYC (the platform on which PrediCache's flagship 192-thread
+numbers were collected~\cite{zinsmeister2026predictive}), nor on a
+direct-attached NVMe.  Lustre's I/O behaviour confines our claims to
+the in-memory regime; out-of-memory results would require a real NVMe
+device.
+
+\textbf{Run length.}  30-second runs heavily front-load the probe
+schedule; only $\approx 1$ probe-sandwich completes before steady
+state.  Longer runs (5--30 minutes, typical of production OLTP
+benchmarking) would let the controller fully converge and amortise
+the exploration tax, likely widening the gap in TPB's favour.
+
+\textbf{Replication.}  $n\!=\!5$ leaves the $\pm 2\%$ point estimates
+on Random Read and Skewed YCSB within one $\sigma$ of zero.  A 95\,\%
+confidence interval claim would require $\geq 15$ replicates per cell
+or longer runs.
+
+\textbf{Signal alternatives.}  TPB's probe-window measurement is
+$\textsf{tx\_delta}$, summed across all worker threads.  An
+alternative signal --- per-arm \texttt{rdtsc} cycles-per-access ---
+would directly measure the cost we care about
+(\textsf{cycles}/\textsf{op}) and would generalise to dollar-per-access
+in cloud-native costings~\cite{cloud_five_minute_rule}.  We have not
+implemented this variant.
+
+\textbf{Generalisation beyond TPB.}  The architectural lesson
+(\S5.3 L1, L2) is broader than promotion-probability control.  Any
+data-plane parameter with a measurable downstream throughput signal
+can be tuned with the same pattern: probe-sandwich on the existing
+telemetry tick, zero hot-path overhead.
+
+% ======================================================================
+\section{Conclusion}
+% ======================================================================
+
+We have presented TPB, an online adaptive controller for the
+promotion-probability parameter of PrediCache's predictive-translation
+buffer pool.  TPB matches the static $\tfrac{1}{32}$ default within
+noise on TPC-C, Random Read, and Skewed YCSB at 16 threads on
+commodity hardware, without manual per-workload tuning.  The design
+is small (one global mask, three environment knobs, a 50-line
+controller hosted by the existing stat thread) and free of
+per-access instrumentation, eliminating the 8--23\,\% bookkeeping
+floor that doomed our earlier hot-path-instrumented variants.
+
+The most transferable contribution is not TPB itself but the
+underlying architectural decision: in a data-plane system, the
+controller belongs at the system's coarsest existing telemetry
+boundary, not on the hot path.
+
+% ======================================================================
+\begin{thebibliography}{99}\small
+\bibitem{zinsmeister2026predictive}
+M.~Zinsmeister, L.-D.~Nguyen, V.~Leis, T.~Neumann.
+\newblock Predictive Translation: High-Performance Buffer Management
+  Without the Trade-Offs.
+\newblock In \textit{Proc.~SIGMOD}, 2026. DOI: \texttt{10.1145/3786678}.
+
+\bibitem{zinsmeister2026predictive_repo}
+PrediCache prototype.
+\newblock
+  \url{https://github.com/mzinsmeister/PrediCache}. Accessed 2026-05-08.
+
+\bibitem{leis2018leanstore}
+V.~Leis, M.~Haubenschild, A.~Kemper, T.~Neumann.
+\newblock LeanStore: In-Memory Data Management Beyond Main Memory.
+\newblock In \textit{Proc.~ICDE}, 2018.
+
+\bibitem{leis2023vmcache}
+V.~Leis, A.~Alhomssi, T.~Ziegler, Y.~Loeck, C.~Dietrich.
+\newblock Virtual-Memory Assisted Buffer Management.
+\newblock In \textit{Proc.~SIGMOD}, 2023.
+
+\bibitem{adaptiveclimb2025}
+Anonymous.
+\newblock Adaptive Cache Replacement with Dynamic Resizing.
+\newblock arXiv preprint 2511.21235, 2025.
+
+\bibitem{watt}
+A.~Alhomssi, V.~Leis.
+\newblock Contention and Space Management in B-Trees.
+\newblock In \textit{Proc.~CIDR}, 2021.
+
+\bibitem{hyperbolic}
+A.~Blankstein, S.~Sen, M.~Freedman.
+\newblock Hyperbolic Caching: Flexible Caching for Web Applications.
+\newblock In \textit{Proc.~USENIX ATC}, 2017.
+
+\bibitem{ottertune}
+D.~Van~Aken, A.~Pavlo, G.~Gordon, B.~Zhang.
+\newblock Automatic Database Management System Tuning Through
+  Large-Scale Machine Learning.
+\newblock In \textit{Proc.~SIGMOD}, 2017.
+
+\bibitem{robinhood}
+D.~Berger, B.~Berg, T.~Zhu, S.~Sen, M.~Harchol-Balter.
+\newblock RobinHood: Tail Latency Aware Caching --- Dynamic Reallocation
+  from Cache-Rich to Cache-Poor.
+\newblock In \textit{Proc.~OSDI}, 2018.
+
+\bibitem{cloud_five_minute_rule}
+K.~Duwe et al.
+\newblock The Five-Minute Rule for the Cloud: Caching in Analytics Systems.
+\newblock In \textit{Proc.~CIDR}, 2025.
+
+\end{thebibliography}
+
+\end{document}

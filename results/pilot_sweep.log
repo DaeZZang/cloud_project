@@ -1,0 +1,11 @@
+[17:28:49] tpcc_chance0 (chance=0, workload=tp-c, datasize=20)
+[!] tpcc_chance0 exited non-zero
+[17:29:05] tpcc_chance4 (chance=4, workload=tp-c, datasize=20)
+[!] tpcc_chance4 exited non-zero
+[17:29:17] tpcc_chance16 (chance=16, workload=tp-c, datasize=20)
+[!] tpcc_chance16 exited non-zero
+[17:29:30] tpcc_chance32 (chance=32, workload=tp-c, datasize=20)
+[!] tpcc_chance32 exited non-zero
+[17:29:43] tpcc_chance128 (chance=128, workload=tp-c, datasize=20)
+[!] tpcc_chance128 exited non-zero
+[17:29:55] tpcc_chance1024 (chance=1024, workload=tp-c, datasize=20)

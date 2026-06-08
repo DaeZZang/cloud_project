@@ -1,0 +1,36 @@
+[14:01:44] tpcc_default r1 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[14:02:29] tpcc_default r2 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[14:03:14] tpcc_default r3 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[14:03:59] tpcc_default r4 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[14:04:45] tpcc_default r5 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16
+[14:05:30] tpcc_tpb_fair r1 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=5 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_fair_dump.csv
+[14:06:16] tpcc_tpb_fair r2 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=5 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_fair_dump.csv
+[14:07:01] tpcc_tpb_fair r3 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=5 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_fair_dump.csv
+[14:07:44] tpcc_tpb_fair r4 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=5 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_fair_dump.csv
+[14:08:28] tpcc_tpb_fair r5 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=5 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_fair_dump.csv
+[14:09:12] tpcc_tpb_warm r1 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=4 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_warm_dump.csv
+[14:09:56] tpcc_tpb_warm r2 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=4 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_warm_dump.csv
+[14:10:41] tpcc_tpb_warm r3 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=4 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_warm_dump.csv
+[14:11:26] tpcc_tpb_warm r4 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=4 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_warm_dump.csv
+[14:12:09] tpcc_tpb_warm r5 :: PROMO_OPT=32 PROMO_SHARED=32 PROMO_EXCL=32 PROMO_DISPLACE=16 TPB=1 TPB_INIT_LC=4 CBP_DUMP=/lustre/s_zun212/TPC-C/results/tpb_v2/tpcc_tpb_warm_dump.csv
+=== ALL DONE ===
+total 76
+drwxr-xr-x  2 s_zun212 ys_ms 4096 May 12 14:12 .
+drwxr-xr-x 10 s_zun212 ys_ms 4096 May 12 14:01 ..
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:02 tpcc_default_r1.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:03 tpcc_default_r2.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:03 tpcc_default_r3.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:04 tpcc_default_r4.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:05 tpcc_default_r5.csv
+-rw-r--r--  1 s_zun212 ys_ms   58 May 12 14:09 tpcc_tpb_fair_dump.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:06 tpcc_tpb_fair_r1.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:06 tpcc_tpb_fair_r2.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:07 tpcc_tpb_fair_r3.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:08 tpcc_tpb_fair_r4.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:09 tpcc_tpb_fair_r5.csv
+-rw-r--r--  1 s_zun212 ys_ms   58 May 12 14:12 tpcc_tpb_warm_dump.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:09 tpcc_tpb_warm_r1.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:10 tpcc_tpb_warm_r2.csv
+-rw-r--r--  1 s_zun212 ys_ms 1437 May 12 14:11 tpcc_tpb_warm_r3.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:12 tpcc_tpb_warm_r4.csv
+-rw-r--r--  1 s_zun212 ys_ms 1438 May 12 14:12 tpcc_tpb_warm_r5.csv

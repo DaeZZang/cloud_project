@@ -1,0 +1,14 @@
+{"from":"paper:zinsmeister2026_predictive_translation","to":"paper:leis2023_vmcache","type":"extends","evidence":"Positions PrediCache as a no-kernel-module alternative to vmcache; §2.1.","ts":"2026-05-11T00:03:30Z"}
+{"from":"paper:zinsmeister2026_predictive_translation","to":"paper:leis2018_leanstore","type":"extends","evidence":"PrediCache offers multi-reference support that LeanStore's pointer swizzling forbids; §2.1.","ts":"2026-05-11T00:03:30Z"}
+{"from":"idea:CBP","to":"paper:zinsmeister2026_predictive_translation","type":"inspired_by","evidence":"CBP replaces the paper's hand-picked 1/32 and 1/512 with online adaptation.","ts":"2026-05-11T00:03:30Z"}
+{"from":"idea:CBP","to":"gap:G1","type":"addresses_gap","evidence":"G1 is exactly the gap CBP targets.","ts":"2026-05-11T00:03:30Z"}
+{"from":"exp:E1","to":"claim:C1","type":"supports","evidence":"Sensitivity sweep shows TPC-C and rndread peak at 1/16, not 1/32.","ts":"2026-05-11T00:03:30Z"}
+{"from":"claim:C1","to":"exp:E1","type":"tested_by","evidence":"E1 directly measures the per-workload optimum.","ts":"2026-05-11T00:03:30Z"}
+{"from":"idea:CBP","to":"exp:E2","type":"tested_by","evidence":"v3 hill-climber stage of CBP tested in E2.","ts":"2026-05-11T00:03:30Z"}
+{"from":"idea:CBP","to":"exp:E3","type":"tested_by","evidence":"v4 bandit stage of CBP tested in E3.","ts":"2026-05-11T00:03:30Z"}
+{"from":"exp:E2","to":"claim:C2","type":"supports","evidence":"CBP-static row (counters only, no adaptation) measures bookkeeping floor at 8-23%.","ts":"2026-05-11T00:03:30Z"}
+{"from":"exp:E2","to":"claim:C3","type":"invalidates","evidence":"CBP-v3 is -11.5% to -22.4% vs default — original claim C3 falsified.","ts":"2026-05-11T00:03:30Z"}
+{"from":"exp:E3","to":"claim:C4","type":"supports","evidence":"CBP-v4 within 1σ of default on TPC-C (-0.83%) and rndread (-0.23%).","ts":"2026-05-11T00:03:30Z"}
+{"from":"claim:C4","to":"claim:C3","type":"refines","evidence":"C4 documents the v3->v4 redesign that closed the round-1 gap.","ts":"2026-05-11T00:03:30Z"}
+{"from":"idea:CBP","to":"paper:anonymous2025_adaptiveclimb","type":"distinguished_from","evidence":"Novelty check confirmed CBP operates on probabilistic promotion-to-preferred-frame, distinct from AdaptiveClimb's LRU-list promotion distance.","ts":"2026-05-11T00:03:30Z"}
+{"from":"exp:E2","to":"idea:CBP","type":"invalidates","evidence":"v3 form of CBP failed on all 3 workloads — drove the redesign captured in v4.","ts":"2026-05-11T00:03:30Z"}
