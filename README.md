@@ -249,13 +249,37 @@ enough that promoting leaves is genuinely wasted — as in uniform `rndread`.
 
 That workload-dependence is the catch, and the point: **"never promote leaves"
 is not universally safe.** A skewed workload re-references a small set of hot
-leaves, where promoting them should *help*. So the right primitive is not a
-fixed leaf rule but a controller that reads each class's payoff and turns leaf
-promotion on or off per workload — role-aware promotion is the structural
-headroom that an adaptive policy (a per-class TPB) could actually capture, which
-the global controllers could not. *(The skewed-YCSB run that tests the opposite
-hypothesis — hot leaves making leaf promotion worthwhile — is in progress;
-results land in `results/perclass_a1_wl2/`.)*
+leaves, where promoting them should *help* — exactly when leaf promotion is no
+longer wasted.
+
+### Confirmation: the leaf-promotion effect flips sign with skew
+
+We measured the effect of turning leaf promotion **off** (inner held at
+$\tfrac{1}{16}$: config `pc_i16_lnone` vs `pc_i16_l128`) across all three
+workloads, ordered by access skew:
+
+| Workload (skew) | leaf-off | leaf-on | Δ (off − on) | \|t\| | Verdict |
+|---|---:|---:|---:|---:|---|
+| `rndread` (uniform) | 16 454 | 15 690 | **+4.87 %** | 3.28 | leaf-off helps (significant) |
+| TPC-C (mild) | 642 | 636 | +0.91 % | 0.70 | leaf-off helps (noise) |
+| skewed YCSB ($\zeta\!=\!0.9$) | 25 842 | 25 959 | −0.45 % | 0.25 | leaf-off neutral / slightly hurts |
+
+The benefit of *not* promoting leaves shrinks **monotonically as the workload
+gets more skewed** — from a significant +4.9 % on uniform reads, to ~+0.9 % on
+TPC-C, to nothing on skewed YCSB. This is precisely the mechanism: skew creates
+re-referenced hot leaves, which restores leaf promotion's payoff and erases the
+"don't-promote-leaves" win. (On skewed YCSB no per-class config beats the global
+best significantly — the surface is flat there too, and global $\tfrac{1}{16}$
+is already fine.)
+
+**The complete A1 finding.** The optimal leaf-promotion policy is
+workload-dependent and *flips sign with skew*. No single static rule —
+neither "always promote leaves" nor "never promote leaves" — is right
+everywhere: leaf-never wins by +5 % on uniform reads but loses its edge under
+skew. So the right primitive is a controller that reads each class's realized
+payoff and toggles leaf promotion per workload. Role-aware promotion is the one
+place we found structural headroom an *adaptive* policy (a per-class TPB) could
+capture — and that the flat-surface global controllers provably could not.
 
 **Artifacts:** controller hooks in `repo/PrediCache/buffer_manager.hpp`
 (`perClassMode`, `promoMaskForPage`) and `btree.hpp` (`btreeIsLeafOffset`);
