@@ -177,6 +177,93 @@ objective* — is the part that outlives this specific controller.
 | `results/figures/fig_v3_v4_progression.{pdf,png}` | CBP-v3 → v4 recovery |
 | `results/figures/summary.json` | means + σ for every (workload, config) cell |
 
+## 4c. Role-aware promotion: the first policy that *beats* the constant
+
+Everything above (global TPB, per-hash-class CBP) only ever *ties* the
+hand-picked constant, because the throughput surface is flat (F3). This section
+reports the one experiment where an adaptive idea **wins** — by changing *which
+pages* get promoted rather than *how often*.
+
+### The mechanism: promotion is an investment that must be repaid
+
+Promotion is not free. Moving a page into its preferred frame costs **two
+exclusive latches + a 4 KB `memcpy`** (8 KB if it must displace a resident
+page). That cost is only repaid if the page is **re-accessed before it is
+evicted** — each later access runs the predictive-translation fast path and
+saves one dependent memory load. The break-even is roughly:
+
+```
+benefit ≈ (re-accesses before eviction) × (fast-path saving per access)
+cost    ≈ latches + memcpy   (paid once, up front)
+```
+
+A page that is promoted and then evicted before any re-access is **pure waste**:
+the `memcpy` is spent, the benefit is zero.
+
+This splits a B-tree's pages into two populations with opposite economics:
+
+| | **inner** nodes | **leaf** nodes (uniform workload) |
+|---|---|---|
+| Count | ~1 % of pages | ~99 % of pages |
+| Re-access rate | very high — *every* lookup traverses them | near zero — a given leaf is rarely drawn again |
+| Promoted page survives to be reused? | yes, millions of times | almost never (evicted first) |
+| Promotion economics | benefit ≫ cost | **cost only, no benefit** |
+
+A single global probability cannot serve both: any rate high enough to keep hot
+inner nodes in place also pays the wasted `memcpy` toll on the cold leaf
+majority. **Not promoting leaves at all removes that toll while keeping the
+inner-node win.**
+
+### The result: on `rndread`, role-aware promotion wins significantly
+
+We classify a page by its B-tree role at the promotion site — one byte read of
+`isLeaf` from the page (`sizeof(BTreeNode)==pageSize`, so the node lies at
+offset 0), zero added hot-path cost — and give inner and leaf nodes separate
+promotion probabilities (`PERCLASS=1 PROMO_INNER PROMO_LEAF`). On uniform
+random-read (10 M-row single B-tree, 8 GB pool, `n=5`, 30 s, 16 threads):
+
+| Config | k TX/s | Δ vs global 1/16 | \|t\| | Δ vs 1/32 | \|t\| |
+|--------|-------:|-----------------:|------:|----------:|------:|
+| global 1/16 (single-constant best) | 15 605 ± 67 | — | — | — | — |
+| global 1/32 (paper default) | 15 771 ± 406 | +1.07 % | 0.90 | — | — |
+| **inner 1/16, leaf never** | **16 454 ± 491** | **+5.44 %** | **3.83** | **+4.33 %** | **2.40** |
+| inner 1/16, leaf 1/128 | 15 690 | +0.54 % | 1.01 | — | — |
+| inner 1/8, leaf never | 15 733 | +0.82 % | 0.84 | — | — |
+
+Both wins clear the 95 % bar (`|t| > 2.31`). The separation is distributional,
+not an outlier: 4 of the 5 winning replicates (16 444–17 044) sit above *every*
+baseline replicate (15 548–15 719), and the baseline σ is tiny (67). The grid
+also pins the sweet spot precisely — you need leaf = **never** (leaf = 1/128
+already collapses the gain to +0.5 %) *and* inner held at 1/16 (a more
+aggressive inner rate does not help). This is exactly the "investment must be
+repaid" story: stop paying the leaf toll, keep the inner return.
+
+### Why it only ties on TPC-C, and why this still motivates *adaptive* per-class
+
+The *same direction* holds on TPC-C — every top configuration is one that
+declines to promote leaves — but the margin is only **+1.02 % (`|t| = 0.93`,
+not significant)**. TPC-C's working set fits better and its hot relations
+include re-referenced leaves, so the leaf toll is small and the flat surface
+(F3) reasserts itself. The headroom appears only when leaf re-access is rare
+enough that promoting leaves is genuinely wasted — as in uniform `rndread`.
+
+That workload-dependence is the catch, and the point: **"never promote leaves"
+is not universally safe.** A skewed workload re-references a small set of hot
+leaves, where promoting them should *help*. So the right primitive is not a
+fixed leaf rule but a controller that reads each class's payoff and turns leaf
+promotion on or off per workload — role-aware promotion is the structural
+headroom that an adaptive policy (a per-class TPB) could actually capture, which
+the global controllers could not. *(The skewed-YCSB run that tests the opposite
+hypothesis — hot leaves making leaf promotion worthwhile — is in progress;
+results land in `results/perclass_a1_wl2/`.)*
+
+**Artifacts:** controller hooks in `repo/PrediCache/buffer_manager.hpp`
+(`perClassMode`, `promoMaskForPage`) and `btree.hpp` (`btreeIsLeafOffset`);
+sweep drivers `experiments/run_perclass_a1.sh` (TPC-C) and
+`experiments/run_perclass_a1_wl2.sh` (rndread + YCSB); analysis
+`experiments/analyze_perclass*.py`; raw CSVs under `results/perclass_a1/` and
+`results/perclass_a1_wl2/`.
+
 ## 5. Honest limitations
 
 - **Flat surface, no win.** Finding 1 shows ≤3 % headroom, so "matches default"

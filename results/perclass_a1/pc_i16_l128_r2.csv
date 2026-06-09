@@ -1,0 +1,34 @@
+PrediCache blk:/lustre/s_zun212/TPC-C/predi_test.bm buffer-pool-size: 16GB
+space: 0.846882 GB 
+ts,tx,rmb,wmb,system,threads,datasize,workload,batch,writeCount,readCount
+0,671533,0,0,PrediCache,16,8,tpcc,64,0,0
+1,707961,0,0,PrediCache,16,8,tpcc,64,0,0
+2,603272,0,0,PrediCache,16,8,tpcc,64,0,0
+3,550428,0,0,PrediCache,16,8,tpcc,64,0,0
+4,568588,0,0,PrediCache,16,8,tpcc,64,0,0
+5,566126,0,0,PrediCache,16,8,tpcc,64,0,0
+6,535182,0,0,PrediCache,16,8,tpcc,64,0,0
+7,530605,0,0,PrediCache,16,8,tpcc,64,0,0
+8,518928,0,0,PrediCache,16,8,tpcc,64,0,0
+9,526456,0,0,PrediCache,16,8,tpcc,64,0,0
+10,672600,0,0,PrediCache,16,8,tpcc,64,0,0
+11,681358,0,0,PrediCache,16,8,tpcc,64,0,0
+12,678644,0,0,PrediCache,16,8,tpcc,64,0,0
+13,664817,0,0,PrediCache,16,8,tpcc,64,0,0
+14,660165,0,0,PrediCache,16,8,tpcc,64,0,0
+15,643920,0,0,PrediCache,16,8,tpcc,64,0,0
+16,660359,0,0,PrediCache,16,8,tpcc,64,0,0
+17,660994,0,0,PrediCache,16,8,tpcc,64,0,0
+18,652973,0,0,PrediCache,16,8,tpcc,64,0,0
+19,657441,0,0,PrediCache,16,8,tpcc,64,0,0
+20,640898,0,0,PrediCache,16,8,tpcc,64,0,0
+21,652888,0,0,PrediCache,16,8,tpcc,64,0,0
+22,651389,0,0,PrediCache,16,8,tpcc,64,0,0
+23,650635,0,0,PrediCache,16,8,tpcc,64,0,0
+24,650896,0,0,PrediCache,16,8,tpcc,64,0,0
+25,648940,0,0,PrediCache,16,8,tpcc,64,0,0
+26,645290,0,0,PrediCache,16,8,tpcc,64,0,0
+27,651671,0,0,PrediCache,16,8,tpcc,64,0,0
+28,625252,0,0,PrediCache,16,8,tpcc,64,0,0
+29,621118,0,0,PrediCache,16,8,tpcc,64,0,0
+space: 10.4907 GB 

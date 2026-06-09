@@ -54,6 +54,25 @@ static u64 promoteDisplaceMask = nextPowerOf2(promoteDisplaceChance) - 1;
 // When DISABLE_PRED=1, predictive-translation fast path is disabled (Traditional-baseline mode).
 static bool disablePredict = false;
 
+// ─── A1: per-class (inner vs leaf) static promotion ────────────────────────
+// PERCLASS=1 routes the primary promotion decision through one of two masks,
+// chosen by the page's B-tree role: inner nodes (hot, traversed every lookup)
+// vs leaf nodes (cold, the bulk of the pool).  The role is read as a single
+// byte from the page at `btreeIsLeafOffset` (set once at startup from
+// offsetof(BTreeNodeHeader,isLeaf)); sizeof(BTreeNode)==pageSize so the node
+// is laid over the frame at offset 0.  Hot-path cost = one byte load + select.
+static bool perClassMode      = false;
+static u64  promoteInnerChance = 16;
+static u64  promoteInnerMask   = nextPowerOf2(promoteInnerChance) - 1;
+static u64  promoteLeafChance  = 16;
+static u64  promoteLeafMask    = nextPowerOf2(promoteLeafChance) - 1;
+inline unsigned btreeIsLeafOffset = 0;   // assigned in btree.hpp once BTreeNode is complete
+
+inline u64 promoMaskForPage(const Page* p) {
+   bool leaf = reinterpret_cast<const u8*>(p)[btreeIsLeafOffset] != 0;
+   return leaf ? promoteLeafMask : promoteInnerMask;
+}
+
 static inline u64 envOrU(const char* env, u64 def) {
    const char* v = getenv(env);
    if (!v) return def;
@@ -71,6 +90,12 @@ static void initPromoteChances() {
    promoteExclusiveMask    = nextPowerOf2(promoteExclusiveChance) - 1;
    promoteDisplaceChance   = envOrU("PROMO_DISPLACE", promoteDisplaceChance);
    promoteDisplaceMask     = nextPowerOf2(promoteDisplaceChance) - 1;
+   promoteInnerChance      = envOrU("PROMO_INNER", promoteInnerChance);
+   promoteInnerMask        = nextPowerOf2(promoteInnerChance) - 1;
+   promoteLeafChance       = envOrU("PROMO_LEAF", promoteLeafChance);
+   promoteLeafMask         = nextPowerOf2(promoteLeafChance) - 1;
+   const char* pc = getenv("PERCLASS");
+   perClassMode = pc && (pc[0] == '1' || pc[0] == 'y' || pc[0] == 'Y');
    const char* dp = getenv("DISABLE_PRED");
    disablePredict = dp && (dp[0] == '1' || dp[0] == 'y' || dp[0] == 'Y');
    cbp::init();
@@ -472,7 +497,10 @@ inline void BufferManager::unfixS(BufferFrame& bf) {
          tryPromote(pid);
       }
    } else {
-      if (!inPreferred && ht.isInlined(&bf) && decidePromotionShared())
+      bool decide = perClassMode
+                       ? ((FastRandomGenerator::getRandU64() & promoMaskForPage(bf.page)) == 0)
+                       : decidePromotionShared();
+      if (!inPreferred && ht.isInlined(&bf) && decide)
          tryPromote(pid);
    }
 }
@@ -485,8 +513,9 @@ inline void BufferManager::unfixX(BufferFrame& bf) {
    u64 hash = hashPID(pid, frameCount);
    bool inPreferred = (intendedFrame(hash) == bf.page);
    if (cbp::enabled) cbp::noteAccess(cbp::classOf(hash), inPreferred);
-   bool decide = cbp::enabled ? cbp::decideForClass(cbp::classOf(hash))
-                              : decidePromotionExclusive();
+   bool decide = cbp::enabled  ? cbp::decideForClass(cbp::classOf(hash))
+               : perClassMode  ? ((FastRandomGenerator::getRandU64() & promoMaskForPage(bf.page)) == 0)
+                               : decidePromotionExclusive();
    if (!ht.isInlined(&bf) || inPreferred || !decide) {
       bf.state.unlockX();
    } else [[unlikely]] {

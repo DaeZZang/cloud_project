@@ -483,6 +483,14 @@ struct BTreeNode : public BTreeNodeHeader {
 
 static_assert(sizeof(BTreeNode) == pageSize, "btree node size problem");
 
+// A1: publish the byte offset of `isLeaf` so the buffer manager can classify a
+// page's B-tree role (inner vs leaf) without a dependency on this header.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+inline const int _btreeIsLeafOffsetInit =
+    (btreeIsLeafOffset = static_cast<unsigned>(offsetof(BTreeNodeHeader, isLeaf)), 0);
+#pragma GCC diagnostic pop
+
 static const u64 metadataPageId = 0;
 
 struct MetaDataPage {
