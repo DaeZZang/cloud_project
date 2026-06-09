@@ -27,7 +27,7 @@ architectural lesson *where to measure*. **(3)** Shifting the question from *how
 often* to *what* to promote, **role-aware promotion** classifies each page as a
 B-tree inner or leaf node and promotes them at different rates. On uniform
 random-read this **beats the single best global constant by +5.4 %**
-($|t|=3.83$, the first statistically significant win in this study), and the
+($\lvert t\rvert=3.83$, the first statistically significant win in this study), and the
 benefit of withholding leaf promotion **flips sign monotonically with workload
 skew** — confirming a clean cost/benefit mechanism and motivating an adaptive
 per-class controller.
@@ -127,9 +127,9 @@ throughput drift so the A/B test is unbiased.
 ### 3.3 Result
 
 **TPB vs the static $\tfrac{1}{32}$ default (n=5, 30 s, 16 threads). Welch
-two-sided $|t|$; 95 % significance needs $|t|>2.31$.**
+two-sided $\lvert t\rvert$; 95 % significance needs $\lvert t\rvert>2.31$.**
 
-| Workload | Variant | Mean (k TX/s) | σ | Δ vs default | $|t|$ |
+| Workload | Variant | Mean (k TX/s) | σ | Δ vs default | $\lvert t\rvert$ |
 |---|---|---|---|---|---|
 | TPC-C | default | 634.4 | 13.3 | — | — |
 | | TPB | 626.2 | 41.8 | −1.29 % | 0.42 |
@@ -196,7 +196,7 @@ byte load + select — algorithmically the same as the global mask. Two env knob
 **Per-class vs global constants, rndread (10 M-row single B-tree, 8 GB pool,
 n=5, 30 s, 16 threads).**
 
-| Config | k TX/s | Δ vs global $\tfrac{1}{16}$ | $|t|$ | Δ vs $\tfrac{1}{32}$ | $|t|$ |
+| Config | k TX/s | Δ vs global $\tfrac{1}{16}$ | $\lvert t\rvert$ | Δ vs $\tfrac{1}{32}$ | $\lvert t\rvert$ |
 |---|---:|---:|---:|---:|---:|
 | global $\tfrac{1}{16}$ (single-constant best) | 15 605 ± 67 | — | — | — | — |
 | global $\tfrac{1}{32}$ (paper default) | 15 771 ± 406 | +1.07 % | 0.90 | — | — |
@@ -216,7 +216,7 @@ keep the inner return" story.
 We measured the effect of turning leaf promotion **off** (inner fixed at
 $\tfrac{1}{16}$) across workloads ordered by access skew:
 
-| Workload (skew) | leaf-off | leaf-on | Δ (off − on) | $|t|$ | Verdict |
+| Workload (skew) | leaf-off | leaf-on | Δ (off − on) | $\lvert t\rvert$ | Verdict |
 |---|---:|---:|---:|---:|---|
 | rndread (uniform) | 16 454 | 15 690 | **+4.87 %** | 3.28 | leaf-off helps (significant) |
 | TPC-C (mild) | 642 | 636 | +0.91 % | 0.70 | leaf-off helps (noise) |
