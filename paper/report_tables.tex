@@ -1,0 +1,138 @@
+% LaTeX versions of every table in REPORT.md.
+% Standalone-compilable (tectonic report_tables.tex) or \input into a paper.
+% Requires: booktabs, multirow, amsmath.
+\documentclass[10pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsmath}
+\begin{document}
+
+% ======================================================================
+% Table 1 — Static-promotion sensitivity (REPORT.md §2)
+% ======================================================================
+\begin{table}[h]
+\centering\small
+\caption{Static-promotion sensitivity (n=2, 16 threads, in-memory).
+  Bold = workload's argmax.}
+\label{tab:sweep}
+\begin{tabular}{lrrr}
+\toprule
+$p_0$ & TPC-C (k TX/s) & Rnd-Read (k TX/s) & Skew-YCSB (M TX/s) \\
+\midrule
+$0$ (off)        & $633$ ($-1.7\%$)          & $15\,521$ ($-1.7\%$)          & $25.4$ ($-4.4\%$) \\
+$\tfrac{1}{16}$  & $\mathbf{651}$ ($+1.2\%$) & $\mathbf{16\,033}$ ($+1.6\%$) & $25.6$ ($-3.7\%$) \\
+$\tfrac{1}{32}$  & $644$ (paper)             & $15\,786$ (paper)             & $\mathbf{26.6}$ (paper) \\
+$\tfrac{1}{128}$ & $622$ ($-3.3\%$)          & $16\,016$ ($+1.5\%$)          & $26.0$ ($-2.0\%$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ======================================================================
+% Table 2 — TPB vs static default (REPORT.md §3.3)
+% ======================================================================
+\begin{table}[h]
+\centering\small
+\caption{TPB vs the static $\tfrac{1}{32}$ default (n=5, 30\,s, 16 threads).
+  Welch two-sided $|t|$; 95\,\% significance needs $|t|>2.31$.
+  Throughput in thousands of TX/s; $\sigma$ is sample standard deviation.}
+\label{tab:tpb}
+\begin{tabular}{llrrrr}
+\toprule
+Workload & Variant & Mean & $\sigma$ & $\Delta$ vs def & $|t|$ \\
+\midrule
+\multirow{2}{*}{TPC-C}     & default & $634.4$   & $13.3$ & ---        & ---  \\
+                           & TPB     & $626.2$   & $41.8$ & $-1.29\%$  & $0.42$ \\
+\midrule
+\multirow{2}{*}{Rnd-Read}  & default & $15\,552$ & $234$  & ---        & ---  \\
+                           & TPB     & $15\,815$ & $558$  & $+1.69\%$  & $0.97$ \\
+\midrule
+\multirow{2}{*}{Skew-YCSB} & default & $26\,032$ & $476$  & ---        & ---  \\
+                           & TPB     & $26\,561$ & $373$  & $+2.03\%$  & $1.95$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ======================================================================
+% Table 3 — Inner vs leaf promotion economics (REPORT.md §4.2)
+% ======================================================================
+\begin{table}[h]
+\centering\small
+\caption{Promotion economics of the two B-tree page populations
+  (uniform workload).}
+\label{tab:econ}
+\begin{tabular}{lll}
+\toprule
+ & \textbf{inner} nodes & \textbf{leaf} nodes \\
+\midrule
+Count                       & $\sim$1\,\%                 & $\sim$99\,\% \\
+Re-access rate              & very high (every lookup)    & near zero \\
+Survives to reuse?          & yes, millions of times      & almost never (evicted first) \\
+Promotion economics         & benefit $\gg$ cost          & \textbf{cost only} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ======================================================================
+% Table 4 — Role-aware promotion on rndread (REPORT.md §4.4)
+% ======================================================================
+\begin{table}[h]
+\centering\small
+\caption{Role-aware promotion vs global constants on rndread
+  (10\,M-row single B-tree, 8\,GB pool, n=5, 30\,s, 16 threads).
+  Bold = the significant win.}
+\label{tab:perclass}
+\begin{tabular}{lr rr rr}
+\toprule
+Config & k TX/s & $\Delta$ vs $\tfrac{1}{16}$ & $|t|$ & $\Delta$ vs $\tfrac{1}{32}$ & $|t|$ \\
+\midrule
+global $\tfrac{1}{16}$ (best constant)            & $15\,605\pm67$  & ---       & ---  & ---       & ---  \\
+global $\tfrac{1}{32}$ (paper default)            & $15\,771\pm406$ & $+1.07\%$ & $0.90$ & ---     & ---  \\
+\textbf{inner $\tfrac{1}{16}$, leaf never}        & $\mathbf{16\,454\pm491}$ & $\mathbf{+5.44\%}$ & $\mathbf{3.83}$ & $\mathbf{+4.33\%}$ & $\mathbf{2.40}$ \\
+inner $\tfrac{1}{16}$, leaf $\tfrac{1}{128}$      & $15\,690$       & $+0.54\%$ & $1.01$ & ---     & ---  \\
+inner $\tfrac{1}{8}$, leaf never                  & $15\,733$       & $+0.82\%$ & $0.84$ & ---     & ---  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ======================================================================
+% Table 5 — Sign-flip of the leaf-promotion effect (REPORT.md §4.5)
+% ======================================================================
+\begin{table}[h]
+\centering\small
+\caption{Effect of turning leaf promotion \emph{off} (inner fixed at
+  $\tfrac{1}{16}$) across workloads ordered by access skew.
+  $\Delta = \text{leaf-off} - \text{leaf-on}$.}
+\label{tab:signflip}
+\begin{tabular}{lrr rr l}
+\toprule
+Workload (skew) & leaf-off & leaf-on & $\Delta$ & $|t|$ & Verdict \\
+\midrule
+rndread (uniform)              & $16\,454$ & $15\,690$ & $\mathbf{+4.87\%}$ & $3.28$ & leaf-off helps (sig.) \\
+TPC-C (mild)                   & $642$     & $636$     & $+0.91\%$          & $0.70$ & leaf-off helps (noise) \\
+Skew-YCSB ($\zeta\!=\!0.9$)    & $25\,842$ & $25\,959$ & $-0.45\%$          & $0.25$ & leaf-off neutral \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ======================================================================
+% Table 6 — Development arc of adaptive controllers (REPORT.md App. A)
+% ======================================================================
+\begin{table}[h]
+\centering\small
+\caption{Development arc of the adaptive controllers. $\Delta$ vs the static
+  $\tfrac{1}{32}$ baseline.}
+\label{tab:arc}
+\begin{tabular}{llrr}
+\toprule
+Variant & Design & TPC-C $\Delta$ & Skew-YCSB $\Delta$ \\
+\midrule
+CBP-v3 & 64-class hill climber, hot-path atomics        & $-11.5\%$        & $-22.4\%$ \\
+CBP-v4 & thread-local counters + hit-rate bandit        & $-0.83\%$        & $-7.4\%$ \\
+TPB-v3 & throughput signal, tol 5\,\%, probe-every 8    & $-2.21\%$ (sig.) & --- \\
+\textbf{TPB-v5} & throughput signal, tol 15\,\%, probe-every 16 & $\mathbf{-1.29\%}$ & $\mathbf{+2.03\%}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
